@@ -86,7 +86,7 @@ int ModemClass::begin(bool restart)
 
   if (_baud > 115200) {
     sendf("AT+IPR=%ld", _baud);
-    if (waitForResponse() != 1) {
+    if (waitForResponse(30000) != 1) {
       return 0;
     }
 
@@ -107,9 +107,9 @@ int ModemClass::shutdown()
   // AT command shutdown
   if (isPowerOn()) {
     send("AT+CPWROFF");
-    if (waitForResponse(40000) != 1) {
-      return 0;
-    }
+    // if (waitForResponse(40000) != 1) {
+    //   return 0;
+    // }
     setVIntPin(SARA_VINT_OFF);
   }
   return 1;
@@ -129,9 +129,9 @@ void ModemClass::end()
 
 void ModemClass::hardReset()
 {
-  // Hardware pin reset, only use in EMERGENCY
+  // Hardware pin reset, use when modem unresponsive
   digitalWrite(_resetPin, HIGH);
-  delay(10000); // Datasheet says 10s minimum low pulse on reset pin. 
+  delay(11000); // Datasheet says 10s minimum low pulse on reset pin. 
   digitalWrite(_resetPin, LOW);
   setVIntPin(SARA_VINT_OFF);
 }
@@ -168,7 +168,7 @@ int ModemClass::noop()
 {
   send("AT");
 
-  return (waitForResponse() == 1);
+  return (waitForResponse(30000) == 1);
 }
 
 int ModemClass::reset()

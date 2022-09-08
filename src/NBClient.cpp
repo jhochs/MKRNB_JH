@@ -23,6 +23,8 @@
 
 #include "NBClient.h"
 
+#include <Adafruit_SleepyDog.h>
+
 enum {
   CLIENT_STATE_IDLE,
   CLIENT_STATE_CREATE_SOCKET,
@@ -52,7 +54,8 @@ NBClient::NBClient(int socket, bool synch) :
   _host(NULL),
   _port(0),
   _ssl(false),
-  _writeSync(true)
+  _writeSync(true),
+  _timeout(60000)
 {
   MODEM.addUrcHandler(this);
 }
@@ -60,6 +63,11 @@ NBClient::NBClient(int socket, bool synch) :
 NBClient::~NBClient()
 {
   MODEM.removeUrcHandler(this);
+}
+
+void NBClient::setClientTimeout(unsigned long timeout)
+{
+  _timeout = timeout;
 }
 
 int NBClient::ready()
@@ -235,7 +243,8 @@ int NBClient::connect()
   }
 
   if (_synch) {
-    while (ready() == 0);
+    unsigned long start = millis();
+    while (ready() == 0 && millis() < start+_timeout);
   } else if (ready() == 0) {
     return 0;
   }
@@ -243,7 +252,8 @@ int NBClient::connect()
   _state = CLIENT_STATE_CREATE_SOCKET;
 
   if (_synch) {
-    while (ready() == 0) {
+    unsigned long start = millis();
+    while (ready() == 0 && millis() < start+_timeout) {
       delay(100);
     }
 
@@ -273,7 +283,8 @@ size_t NBClient::write(const uint8_t *buf)
 size_t NBClient::write(const uint8_t* buf, size_t size)
 {
   if (_writeSync) {
-    while (ready() == 0);
+    unsigned long start = millis();
+    while (ready() == 0 && millis() < start+_timeout);
   } else if (ready() == 0) {
     return 0;
   }
@@ -342,6 +353,7 @@ void NBClient::endWrite(bool /*sync*/)
 
 uint8_t NBClient::connected()
 {
+  Watchdog.reset();
   MODEM.poll();
 
   if (_socket == -1) {
@@ -396,7 +408,8 @@ int NBClient::read()
 int NBClient::available()
 {
   if (_synch) {
-    while (ready() == 0);
+    unsigned long start = millis();
+    while (ready() == 0 && millis() < start+_timeout);
   } else if (ready() == 0) {
     return 0;
   }

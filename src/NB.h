@@ -64,12 +64,20 @@ public:
     */
   bool secureShutdown();
 
+  /** Hard reset the modem
+   */ 
+  void hardReset();
+
   /** Get last command status
       @return returns 0 if last command is still executing, 1 success, >1 error
     */
   int ready();
 
   void setTimeout(unsigned long timeout);
+
+  /** Get number of hard resets
+   */
+  int getResetCount();
 
   unsigned long getTime();
   unsigned long getLocalTime();
@@ -86,6 +94,7 @@ private:
   const char* _password;
   String _response;
   unsigned long _timeout;
+  int _resetCount = 0;
 };
 
 #endif

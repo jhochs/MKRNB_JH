@@ -23,6 +23,8 @@
 
 #include "NB.h"
 
+#include <Adafruit_SleepyDog.h>
+
 __attribute__((weak)) void mkr_nb_feed_watchdog()
 {
     /* This function can be overwritten by a "strong" implementation
@@ -86,7 +88,10 @@ NB_NetworkStatus_t NB::begin(const char* pin, const char* apn, bool restart, boo
 NB_NetworkStatus_t NB::begin(const char* pin, const char* apn, const char* username, const char* password, bool restart, bool synchronous)
 {
   if (!MODEM.begin(restart)) {
-    _state = ERROR;
+    _state = ERROR;	
+    Serial.println("Error starting modem, hard resetting...");	
+    MODEM.hardReset();	
+    Serial.println("Modem was hard reset");
   } else {
     _pin = pin;
     _apn = apn;
@@ -99,6 +104,7 @@ NB_NetworkStatus_t NB::begin(const char* pin, const char* apn, const char* usern
       unsigned long start = millis();
 
       while (ready() == 0) {
+        Watchdog.reset();
         if (_timeout && !((millis() - start) < _timeout)) {
           _state = ERROR;
           break;
@@ -148,6 +154,13 @@ bool NB::secureShutdown()
   MODEM.end();
   _state = NB_OFF;
   return true;
+}
+
+void NB::hardReset()
+{
+  MODEM.hardReset();
+  Serial.println("Modem was hard reset");
+  _resetCount++;
 }
 
 int NB::ready()
@@ -438,6 +451,11 @@ int NB::ready()
 void NB::setTimeout(unsigned long timeout)
 {
   _timeout = timeout;
+}
+
+int NB::getResetCount()
+{
+  return _resetCount;
 }
 
 unsigned long NB::getTime()

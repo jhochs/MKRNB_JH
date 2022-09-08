@@ -41,6 +41,11 @@ public:
 
   virtual ~NBClient();
 
+  /** Set timeout
+      @param timeout 
+   */
+  void setClientTimeout(unsigned long timeout);
+
   /** Get last command status
       @return returns 0 if last command is still executing, 1 success, >1 error
   */
@@ -142,6 +147,7 @@ private:
   const char* _host;
   uint16_t _port;
   bool _ssl;
+  unsigned long _timeout;
 
   bool _writeSync;
   String _response;
